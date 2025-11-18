@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/members/signup", // 회원가입 API
                                 "/api/members/login",  // 로그인 API
+                                "/test/**",
                                // "/hello",              // 테스트용 API
                                 "/swagger-ui.html",    // Swagger UI
                                 "/swagger-ui/**",      // (Swagger UI 리소스)

@@ -22,6 +22,13 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' }
+}
+
+// 2. Spring AI 버전 관리 (BOM)
+ext {
+    set('springAiVersion', "1.0.0-M2") // 최신 안정화 버전
 }
 
 // Spring Cloud AWS BOM(Bill of Materials) - 버전 관리
@@ -51,6 +58,17 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
     // Spring Boot 3.x용 AWS S3 스타터 (신버전)
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
+    // [추가] Spring AI OpenAI 스타터
+    implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+
+}
+
+// BOM 적용
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+        // (AWS 관련 BOM이 있다면 유지)
+    }
 }
 
 tasks.named('test') {
