@@ -34,47 +34,14 @@
 
 ---
 
-## 🚀 설치 및 실행 방법 (Getting Started)
-
-### 1. 사전 요구 사항 (Prerequisites)
-* Java 17 이상
-* AWS 계정 (S3, RDS 접근 권한)
-* OpenAI API Key
-
-### 2. 환경 변수 설정 (application.yml)
-`src/main/resources/application.yml` 파일에 본인의 키 값을 입력해야 합니다.
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://[YOUR_RDS_ENDPOINT]:5432/postgres
-    username: [DB_USER]
-    password: [DB_PASSWORD]
-  cloud:
-    aws:
-      credentials:
-        access-key: [AWS_ACCESS_KEY]
-        secret-key: [AWS_SECRET_KEY]
-      region:
-        static: ap-northeast-2
-  ai:
-    openai:
-      api-key: [OPENAI_API_KEY]
-jwt:
-  secret: [YOUR_JWT_SECRET_KEY]
-aws:
-  s3:
-    bucket: [YOUR_S3_BUCKET_NAME]
-
----
-
 ## 🛠 기술 스택 (Tech Stack)
 
 ### Backend
 * **Language:** Java 17
 * **Framework:** Spring Boot 3.x
 * **Security:** Spring Security, JWT (JSON Web Token)
-* **Database:** * **Main:** AWS RDS (PostgreSQL 16)
+* **Database:**
+    * **Main:** AWS RDS (PostgreSQL 16)
     * **Vector Search:** pgvector Extension
 * **ORM:** Spring Data JPA, Hibernate
 * **Build Tool:** Gradle
