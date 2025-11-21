@@ -1,11 +1,10 @@
 package com.rag.project.api.service;
 
-import com.rag.project.api.domain.Document;
-import com.rag.project.api.domain.DocumentRepository;
-import com.rag.project.api.domain.Member;
-import com.rag.project.api.domain.MemberRepository;
+import com.rag.project.api.domain.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +15,8 @@ import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j //로그 찍기 위한 롬복
@@ -29,6 +30,8 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     //테이블 관리자(Member)
     private final MemberRepository memberRepository;
+    private final EmbeddingService embeddingService;          // 벡터 변환기
+    private final DocumentEmbeddingRepository embeddingRepository; // 벡터 DB 관리자
 
     //yml에 등록한 S3 버킷 이름
     @Value("${aws.s3.bucket}")
@@ -43,10 +46,14 @@ public class DocumentService {
     @Transactional
     public Document uploadDocument(MultipartFile file, String memberEmail) throws IOException{
 
-        //memberEmail로 Member 엔티티를 찾음
+        //memberEmail로 Member 엔티티를 찾음(회원 조회)
         Member member = memberRepository.findByEmail(memberEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다: " + memberEmail));
 
+        //텍스트 추출
+        String extractedText = extractText(file);
+        log.info("파일 텍스트 추출 완료! 길이: {} 자", extractedText.length());
+        //log.info("추출된 텍스트일부(앞 100자): {}", extractedText.substring(0, Math.min(extractedText.length(), 100)));
         //s3에 저장할 파일 이름 생성(중복 방지)
         String originalFileName = file.getOriginalFilename();
         String s3FileName = UUID.randomUUID().toString() + "-" + originalFileName;
@@ -76,7 +83,60 @@ public class DocumentService {
                 .s3FileUrl(s3FileUrl).member(member)
                 .build();
 
-        //DocumentRepository를 통해 DB저장
-        return documentRepository.save(document);
+        //DB 저장 후, 변수에 담기, 바로 return X, 변수에 담아둠
+        Document savedDocument = documentRepository.save(document);
+
+        //RAG 파이프라인: 텍스트 쪼개기 & 벡터 저장
+        if(extractedText != null && !extractedText.isBlank()){
+            //텍스트 쪼개기
+            List<String> chunks = splitTextIntoChunks(extractedText, 500);
+
+            for(String chunk : chunks){
+                //각 조각을 벡터로 변환
+                float[] vector = embeddingService.getEmbedding(chunk);
+
+                //DocumentEmbedding 엔티티 생성 및 저장
+                DocumentEmbedding embeddingEntity = DocumentEmbedding.builder()
+                        .document(savedDocument)
+                        .textSegment(chunk)
+                        .embeddingVector(vector).build();
+
+                embeddingRepository.save(embeddingEntity);
+            }
+            log.info("벡터 데이터 {}개 저장 완료!", chunks.size());
+        }
+
+        return savedDocument; //최종 변환
+    }
+
+    /**
+     * 파일에서 텍스트를 추출
+     */
+    private String extractText(MultipartFile file) throws IOException {
+        String contentType = file.getContentType();
+
+        if(contentType == null){
+            throw new IllegalArgumentException("파일 형식을 확인할 수 없습니다.");
+        }
+        if(contentType.equals("application/pdf")){
+            //pdf파일인 경우
+            try(PDDocument document = PDDocument.load(file.getInputStream())){
+                PDFTextStripper stripper = new PDFTextStripper();
+                return stripper.getText(document);
+            }
+        }else if(contentType.startsWith("text/")){
+            //txt파일인 경우
+            return new String(file.getBytes());
+        }else{
+            throw new IllegalArgumentException("지원하지 않는 파일 형식입니다." + contentType);
+        }
+    }
+    //텍스트 분할 메서드
+    private List<String> splitTextIntoChunks(String text, int chunkSize){
+        List<String> chunks = new ArrayList<>();
+        for(int i = 0; i < text.length(); i += chunkSize){
+            chunks.add(text.substring(i, Math.min(text.length(), i + chunkSize)));
+        }
+        return chunks;
     }
 }

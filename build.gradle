@@ -60,7 +60,10 @@ dependencies {
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
     // [추가] Spring AI OpenAI 스타터
     implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
-
+    // --- PDF 처리 라이브러리 ---
+    implementation 'org.apache.pdfbox:pdfbox:2.0.30'
+    // --- PostgreSQL pgvector 지원 (Hibernate 6용) ---
+    implementation 'org.hibernate.orm:hibernate-vector:6.6.0.Final'
 }
 
 // BOM 적용
