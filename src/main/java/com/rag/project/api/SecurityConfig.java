@@ -24,6 +24,7 @@ public class SecurityConfig {
         http
                 // CSRF 보호 비활성화 (JWT는 세션을 사용하지 않으므로 CSRF 공격에 상대적으로 안전)
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configure(http))//Spring MVC의 Cors 설정 따름
 
                 // 세션 관리 정책 설정 -> "STATELESS" (상태 없음)
                 // 이것이 Spring Security가 세션을 생성하지 않고, 오직 JWT 토큰으로만 인증하게 만드는 핵심 설정

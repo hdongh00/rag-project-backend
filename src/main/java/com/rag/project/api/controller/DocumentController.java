@@ -7,13 +7,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,6 +37,16 @@ public class DocumentController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+    @GetMapping
+    public ResponseEntity<List<DocumentResponse>> getMyDocuments(@AuthenticationPrincipal String memberEmail) {
+        List<Document> documents = documentService.getMemberDocuments(memberEmail);
+
+        List<DocumentResponse> response = documents.stream()
+                .map(doc -> new DocumentResponse(doc.getId(), doc.getOriginalFileName(), doc.getCreateAt()))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+    record DocumentResponse(Long id, String fileName, java.time.LocalDateTime createAt) {}
 
     //DTO
     @RequiredArgsConstructor

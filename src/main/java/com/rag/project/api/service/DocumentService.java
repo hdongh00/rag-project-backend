@@ -126,7 +126,7 @@ public class DocumentService {
             }
         }else if(contentType.startsWith("text/")){
             //txt파일인 경우
-            return new String(file.getBytes());
+            return new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
         }else{
             throw new IllegalArgumentException("지원하지 않는 파일 형식입니다." + contentType);
         }
@@ -138,5 +138,12 @@ public class DocumentService {
             chunks.add(text.substring(i, Math.min(text.length(), i + chunkSize)));
         }
         return chunks;
+    }
+    @Transactional(readOnly = true)
+    public List<Document> getMemberDocuments(String memberEmail){
+        Member member = memberRepository.findByEmail(memberEmail)
+                .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
+
+        return documentRepository.findByMemberId(member.getId());
     }
 }
