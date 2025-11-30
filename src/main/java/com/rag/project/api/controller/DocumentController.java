@@ -1,5 +1,6 @@
 package com.rag.project.api.controller;
 
+import com.rag.project.api.dto.DocumentUploadResponse;
 import com.rag.project.api.domain.Document;
 import com.rag.project.api.service.DocumentService;
 import lombok.RequiredArgsConstructor;
@@ -48,11 +49,4 @@ public class DocumentController {
     }
     record DocumentResponse(Long id, String fileName, java.time.LocalDateTime createAt) {}
 
-    //DTO
-    @RequiredArgsConstructor
-    static class DocumentUploadResponse {
-        public final Long documentId;
-        public final String originalFileName;
-        public final String s3FileUrl;
-    }
 }
