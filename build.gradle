@@ -64,6 +64,9 @@ dependencies {
     implementation 'org.apache.pdfbox:pdfbox:2.0.30'
     // --- PostgreSQL pgvector 지원 (Hibernate 6용) ---
     implementation 'org.hibernate.orm:hibernate-vector:6.6.0.Final'
+    //MS 파일 처리
+    implementation 'org.apache.poi:poi-ooxml:5.2.5'
+    implementation 'org.apache.poi:poi:5.2.5'
 }
 
 // BOM 적용
