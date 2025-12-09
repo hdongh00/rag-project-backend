@@ -38,6 +38,16 @@ public class DocumentController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @DeleteMapping("/{documentId}")
+    public ResponseEntity<Void> deleteDocument(
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal String memberEmail
+    ){
+        documentService.deleteDocument(documentId, memberEmail);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping
     public ResponseEntity<List<DocumentResponse>> getMyDocuments(@AuthenticationPrincipal String memberEmail) {
         List<Document> documents = documentService.getMemberDocuments(memberEmail);

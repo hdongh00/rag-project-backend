@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -30,6 +32,9 @@ public class Document {
     @ManyToOne(fetch = FetchType.LAZY) //지연 로딩
     @JoinColumn(name = "member_id", nullable = false) //FK
     private Member member; //문서를 업로드한 회원
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentEmbedding> embeddings = new ArrayList<>();
 
     @PrePersist //DB에 Insert 되기 직전에 자동으로 호출
     protected void onCreate() {

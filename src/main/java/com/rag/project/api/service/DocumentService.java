@@ -13,6 +13,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 // Apache POI (Word, PPT) 관련 import
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
@@ -193,5 +194,35 @@ public class DocumentService {
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
 
         return documentRepository.findByMemberId(member.getId());
+    }
+
+    @Transactional
+    public void deleteDocument(Long documentId, String memberEmail){
+        //문서 조회
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new IllegalArgumentException("문서가 존재하지 않습니다."));
+
+        //권한 확인
+        if(!document.getMember().getEmail().equals(memberEmail)){
+            throw new IllegalArgumentException("이 문서를 삭제할 권한이 없습니다.");
+        }
+
+        //s3에서 파일 삭제
+        String fileKey = document.getS3FileUrl().substring(document.getS3FileUrl().lastIndexOf("/") + 1);
+
+        try{
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileKey)
+                    .build();
+
+            s3Client.deleteObject(deleteObjectRequest);
+            log.info("S# 파일 삭제 완료: {}", fileKey);
+        }catch(Exception e){
+            // s3에 파일 없어도 DB 삭제는 진행하기 위해 로그만 찍음
+            log.error("S3 파일 삭제 실패 (DB 삭제는 진행): {}", e.getMessage());
+        }
+        //DB에서 문서 정보 삭제
+        documentRepository.delete(document);
     }
 }
