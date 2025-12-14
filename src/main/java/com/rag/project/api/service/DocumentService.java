@@ -25,6 +25,9 @@ import org.apache.poi.xslf.usermodel.XSLFTextShape;
 
 
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -207,17 +210,27 @@ public class DocumentService {
             throw new IllegalArgumentException("이 문서를 삭제할 권한이 없습니다.");
         }
 
-        //s3에서 파일 삭제
-        String fileKey = document.getS3FileUrl().substring(document.getS3FileUrl().lastIndexOf("/") + 1);
-
         try{
+            //URL 객체로 만들어서 경로만 뽑아냄
+            URL url = new URL(document.getS3FileUrl());
+            String objectKey = url.getPath();
+
+            //맨 앞의 슬래시 제거
+            if(objectKey.startsWith("/")){
+                objectKey = objectKey.substring(1);
+            }
+
+            //한글 디코딩
+            String fileKey = URLDecoder.decode(objectKey, StandardCharsets.UTF_8.toString());
+
+            log.info("최종 삭제 요청 키: [{}]", fileKey);
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucket)
                     .key(fileKey)
                     .build();
 
             s3Client.deleteObject(deleteObjectRequest);
-            log.info("S# 파일 삭제 완료: {}", fileKey);
+            log.info("S3 파일 삭제 요청 완료");
         }catch(Exception e){
             // s3에 파일 없어도 DB 삭제는 진행하기 위해 로그만 찍음
             log.error("S3 파일 삭제 실패 (DB 삭제는 진행): {}", e.getMessage());
