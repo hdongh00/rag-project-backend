@@ -61,9 +61,14 @@ public class MemberService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("해당 이메일을 찾을 수 없습니다: "   + email));
-        //Spring Security가 사용하는 UserDetails 객체로 변환
-        return new User(member.getEmail(), member.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
 
+        //Spring Security는 비밀번호가 null이면 에러, 임시로 빈 문자열을 추가
+        String password = member.getPassword() != null ? member.getPassword() : "";
+
+        return User.builder()
+                .username(member.getEmail())
+                .password(password) //
+                .roles(member.getRole().name())
+                .build();
     }
 }

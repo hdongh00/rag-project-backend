@@ -65,7 +65,12 @@ public class DocumentService {
 
         //텍스트 추출
         String extractedText = extractText(file);
+
+        //null byte 제거
+        String cleanText = sanitizeText(extractedText);
+
         log.info("파일 텍스트 추출 완료! 길이: {} 자", extractedText.length());
+
         //log.info("추출된 텍스트일부(앞 100자): {}", extractedText.substring(0, Math.min(extractedText.length(), 100)));
         //s3에 저장할 파일 이름 생성(중복 방지)
         String originalFileName = file.getOriginalFilename();
@@ -100,18 +105,20 @@ public class DocumentService {
         Document savedDocument = documentRepository.save(document);
 
         //RAG 파이프라인: 텍스트 쪼개기 & 벡터 저장
-        if(extractedText != null && !extractedText.isBlank()){
+        if(cleanText != null && !cleanText.isBlank()){
             //텍스트 쪼개기
-            List<String> chunks = splitTextIntoChunks(extractedText, 500);
+            List<String> chunks = splitTextIntoChunks(cleanText, 500);
 
             for(String chunk : chunks){
+                //청크 후, 한번 더 안전하게 처리해주면 좋음
+                String cleanSegment = sanitizeText(chunk);
                 //각 조각을 벡터로 변환
-                float[] vector = embeddingService.getEmbedding(chunk);
+                float[] vector = embeddingService.getEmbedding(cleanSegment);
 
                 //DocumentEmbedding 엔티티 생성 및 저장
                 DocumentEmbedding embeddingEntity = DocumentEmbedding.builder()
                         .document(savedDocument)
-                        .textSegment(chunk)
+                        .textSegment(cleanSegment) //DB에 깨끗한 텍스트 저장
                         .embeddingVector(vector).build();
 
                 embeddingRepository.save(embeddingEntity);
@@ -237,5 +244,14 @@ public class DocumentService {
         }
         //DB에서 문서 정보 삭제
         documentRepository.delete(document);
+    }
+
+    //텍스트 정제 함수
+    private String sanitizeText(String text){
+        if (text == null){
+            return null;
+        }
+        //0x00를 빈 문자열로 제거
+        return text.replace("\u0000", "");
     }
 }

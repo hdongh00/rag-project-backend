@@ -1,6 +1,10 @@
 package com.rag.project.api.config;
 
 import com.rag.project.api.filter.JwtAuthFilter;
+import com.rag.project.api.handler.OAuth2SuccessHandler;
+import com.rag.project.api.service.CustomOAuth2UserService;
+import com.rag.project.api.service.MemberService;
+import com.rag.project.api.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,9 +26,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler  oAuth2SuccessHandler;
+    private final MemberService memberService;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtUtil jwtUtil) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable) // CSRF 비활성화
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 적용
@@ -42,11 +49,15 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/h2-console/**"
                         ).permitAll()
+                        .requestMatchers("/error").permitAll() //에러 페이지 허용
                         .anyRequest().authenticated()
                 )
+                //OAuth2 로그인 설정
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))//유저 정보 저장
+                        .successHandler(oAuth2SuccessHandler)) //성공시 핸들러(토큰 발급)
 
-               // .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthFilter(jwtUtil, memberService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
