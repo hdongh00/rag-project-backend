@@ -18,7 +18,7 @@ public class EmbeddingService {
      * 텍스트를 벡터로 변환
      */
     public float[] getEmbedding(String text){
-        log.info("Spring AI 임베팅 변환 시작. 텍스트 길이: {}", text.length());
+        log.info("Spring AI 임베딩 변환 시작. 텍스트 길이: {}", text.length());
 
         try{
             //Spring AI에게 텍스트를 주고 임베딩 요청
