@@ -1,62 +1,64 @@
-# 🤖 RAG-based AI Chatbot Backend (Spring Boot + AWS)
+# 🤖 RAG-based AI Chatbot Service (Full-Stack)
 
-> **사용자가 업로드한 문서를 기반으로 정확하게 답변하는 AI 챗봇 서비스입니다.**
-> Spring Boot, AWS(S3, RDS), OpenAI, pgvector를 활용하여 RAG(Retrieval-Augmented Generation) 파이프라인을 구축했습니다.
+> **사용자가 업로드한 문서(PDF, Word, PPT 등)를 학습하여 질문에 정확하게 답변하는 AI 챗봇 서비스입니다.** > **Spring Boot**와 **React**를 연동한 풀스택 프로젝트로, RAG(Retrieval-Augmented Generation) 파이프라인을 통해 환각(Hallucination) 없는 정확한 정보를 제공합니다.
 
 ---
 
 ## 📖 프로젝트 소개 (Project Overview)
 
-이 프로젝트는 **RAG (검색 증강 생성)** 기술을 활용하여, LLM(거대 언어 모델)이 학습하지 않은 **사내 문서나 개인 자료**에 대해서도 정확한 답변을 제공할 수 있도록 돕는 백엔드 API 서버입니다.
+이 프로젝트는 거대 언어 모델(LLM)이 알지 못하는 **사내 비공개 문서나 개인 자료**를 지식 베이스로 활용할 수 있도록 돕는 **RAG 기반 챗봇 서비스**입니다.
 
-### 💡 핵심 문제 해결
-* **할루시네이션 방지:** AI가 모르는 내용을 지어내는 것을 방지하고, 제공된 문서(Fact)에 기반해서만 답변합니다.
-* **최신/비공개 데이터 활용:** 인터넷에 없는 최신 정보나 보안 문서를 AI에게 실시간으로 학습시킬 수 있습니다.
+### 💡 핵심 가치
+* **풀스택 아키텍처:** Spring Boot API 서버와 React 기반의 모던한 UI가 통합된 완성형 서비스입니다.
+* **광범위한 문서 지원:** 단순 텍스트뿐만 아니라 **PDF, Word(.docx), PPT(.pptx)** 등 다양한 오피스 문서를 지원합니다.
+* **편리한 사용자 경험:** 구글 소셜 로그인, 실시간 채팅 UI, 문서 관리 사이드바 등 직관적인 UX를 제공합니다.
 
 ---
 
 ## ✨ 주요 기능 (Key Features)
 
-### 1. 🔐 회원 인증 시스템 (Authentication)
-* **회원가입/로그인:** BCrypt 비밀번호 암호화 및 JWT 토큰 발급.
-* **보안 필터:** `JwtAuthFilter`를 통해 보호된 API에 대한 접근 제어.
+### 1. 🔐 강화된 인증 시스템 (Advanced Auth)
+* **소셜 로그인:** Google OAuth2.0을 연동하여 원클릭 로그인/회원가입 지원.
+* **JWT 보안:** Access Token 기반의 인증 인가 처리 및 `JwtAuthFilter`를 통한 API 보안 적용.
+* **일반 로그인:** BCrypt 암호화를 적용한 이메일/비밀번호 회원가입 지원.
 
-### 2. 📂 문서 업로드 및 임베딩 (Ingestion Pipeline)
-* **파일 업로드:** 사용자가 PDF/TXT 파일을 업로드하면 AWS S3에 안전하게 저장.
-* **텍스트 추출:** Apache PDFBox를 사용하여 PDF 내 텍스트 추출.
-* **자동 임베딩:** 추출된 텍스트를 `text-embedding-3-small` 모델을 통해 1536차원 벡터로 변환.
-* **벡터 저장:** 변환된 벡터를 `pgvector`가 설치된 PostgreSQL에 저장.
+### 2. 📂 문서 파이프라인 (Ingestion Pipeline)
+* **다양한 포맷 지원:** PDF(`Apache PDFBox`), Word/PPT(`Apache POI`) 파일의 텍스트를 추출하여 학습.
+* **S3 스토리지:** 업로드된 원본 파일은 AWS S3 버킷에 안전하게 영구 저장.
+* **벡터 임베딩:** 추출된 텍스트를 `text-embedding-3-small`로 벡터화하여 `pgvector`(PostgreSQL)에 저장.
 
-### 3. 💬 AI 채팅 및 검색 (RAG Chat)
-* **의미 기반 검색 (Vector Search):** 사용자의 질문을 벡터로 변환하여, DB에서 가장 유사한(거리(L2)가 가까운) 문서 조각을 검색.
-* **답변 생성:** 검색된 문서를 Context로 포함하여 GPT-4o-mini에게 질문 전송.
-* **정확한 답변:** AI는 제공된 문서 내용을 근거로 답변 생성.
+### 3. 💬 AI 채팅 및 컨텍스트 (RAG Chat)
+* **벡터 유사도 검색:** 사용자 질문과 가장 관련성 높은 문서 조각(Chunk)을 L2 거리 기반으로 검색.
+* **대화 맥락 유지:** 이전 대화 내용(History)을 DB에 저장하고, 질문 시 최근 대화 내역을 함께 프롬프트에 포함하여 문맥을 이해하는 답변 생성.
+* **프롬프트 엔지니어링:** 시스템 프롬프트를 통해 AI의 답변 페르소나와 답변 형식을 제어.
+
+### 4. 💻 모던 프론트엔드 (React Client)
+* **반응형 UI:** Tailwind CSS를 활용한 깔끔하고 직관적인 채팅 인터페이스.
+* **문서 관리:** 사이드바를 통해 학습된 문서 목록을 확인하고 삭제할 수 있는 관리 기능 제공.
+* **실시간 인터랙션:** 로딩 상태 표시(Skeleton/Spinner), 토스트 알림(Toast Notification) 등으로 향상된 사용자 경험 제공.
 
 ---
 
 ## 🛠 기술 스택 (Tech Stack)
 
+### Frontend
+* **Core:** React 19, Vite
+* **Styling:** Tailwind CSS 4, Lucide React (Icons)
+* **State/Network:** Axios, React Router DOM
+* **Environment:** Node.js
+
 ### Backend
 * **Language:** Java 17
 * **Framework:** Spring Boot 3.x
-* **Security:** Spring Security, JWT (JSON Web Token)
-* **Database:**
-    * **Main:** AWS RDS (PostgreSQL 16)
-    * **Vector Search:** pgvector Extension
-* **ORM:** Spring Data JPA, Hibernate
-* **Build Tool:** Gradle
+* **Security:** Spring Security, OAuth2 Client, JWT
+* **Database:** * **Main:** AWS RDS (PostgreSQL 16)
+    * **Vector:** pgvector Extension
+* **Utilities:** Apache POI (Word/PPT), Apache PDFBox (PDF)
 
-### AI & RAG
-* **Framework:** Spring AI (1.0.0-M2)
-* **LLM:** OpenAI GPT-4o-mini
-* **Embedding:** OpenAI text-embedding-3-small
-* **PDF Processing:** Apache PDFBox
-
-### Infrastructure & Cloud
-* **Cloud Provider:** AWS
-* **Server:** AWS EC2 (Ubuntu)
-* **Storage:** AWS S3 (문서 원본 저장)
-* **CI/CD & VCS:** Git, GitHub
+### AI & Cloud
+* **LLM Ops:** Spring AI (OpenAI GPT-4o-mini, text-embedding-3-small)
+* **Infrastructure:** AWS EC2, S3, RDS
+* **DevOps:** Git, GitHub
 
 ---
 
@@ -64,23 +66,32 @@
 
 ```mermaid
 graph LR
-    User[사용자] -->|API 요청| EC2["EC2 (Spring Boot Server)"]
-    EC2 -->|인증/인가| JWT["JWT (JWT Filter)"]
-    EC2 -->|파일 업로드| S3["S3 (AWS S3 Bucket)"]
-    EC2 -->|벡터 변환| OpenAI["OpenAI (OpenAI API)"]
-    EC2 -->|메타데이터 & 벡터 저장| RDS["RDS (AWS RDS PostgreSQL + pgvector)"]
-    
-    subgraph RAG_Pipeline [RAG Pipeline]
-    S3 -->|텍스트 추출| PDFBox
-    PDFBox -->|임베딩| OpenAI
-    OpenAI -->|벡터 저장| RDS
+    subgraph Client [React Frontend]
+        UI[User Interface]
+        Auth_UI[Login Page & Google Auth]
     end
-    
-    subgraph Chat_Pipeline [Chat Pipeline]
-    User -->|질문| EC2
-    EC2 -->|질문 벡터화| OpenAI
-    OpenAI -->|유사 문서 검색| RDS
-    RDS -->|관련 문서 Context| EC2
-    EC2 -->|프롬프트 생성| GPT["GPT (GPT-4o-mini)"]
-    GPT -->|답변| User
+
+    subgraph Server [Spring Boot Backend]
+        Controller[REST Controllers]
+        Security[Security Filter Chain]
+        Service[Business Logic]
     end
+
+    subgraph Infrastructure [AWS & Database]
+        S3[AWS S3 Bucket]
+        RDS[PostgreSQL + pgvector]
+    end
+
+    subgraph AI [OpenAI API]
+        GPT[GPT-4o-mini]
+        Embed[Embedding Model]
+    end
+
+    %% Flow
+    UI -->|API Requests| Controller
+    Auth_UI -->|OAuth2| Security
+    
+    Controller --> Service
+    Service -->|File Upload| S3
+    Service -->|Vector Search & Save| RDS
+    Service -->|Generate Answer & Embedding| AI
