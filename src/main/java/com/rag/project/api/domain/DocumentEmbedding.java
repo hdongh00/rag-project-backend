@@ -40,4 +40,7 @@ public class DocumentEmbedding {
         this.textSegment = textSegment;
         this.embeddingVector = embeddingVector;
     }
+    public String getFileName(){
+        return this.document != null ? this.document.getFileName() : null;
+    }
 }

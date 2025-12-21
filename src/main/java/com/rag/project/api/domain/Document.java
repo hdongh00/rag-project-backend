@@ -48,4 +48,7 @@ public class Document {
         this.member = member;
     }
 
+    public String getFileName(){
+        return this.originalFileName;
+    }
 }
