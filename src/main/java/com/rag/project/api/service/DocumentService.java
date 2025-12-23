@@ -111,7 +111,7 @@ public class DocumentService {
         //RAG 파이프라인: 텍스트 쪼개기 & 벡터 저장
         if (cleanText != null && !cleanText.isBlank()) {
             //텍스트 쪼개기
-            List<String> chunks = fileHandler.splitTextIntoChunks(cleanText, 500);
+            List<String> chunks = fileHandler.splitTextIntoChunks(cleanText);
 
             for (String chunk : chunks) {
                 //청크 후, 한번 더 안전하게 처리해주면 좋음

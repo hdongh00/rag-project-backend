@@ -1,5 +1,6 @@
 package com.rag.project.api.component;
 
+import org.springframework.ai.document.Document;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
@@ -7,15 +8,22 @@ import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class FileHandler {
+
+    //스마트 청킹, 800토큰 = 한글 400~500자 / 영문 3000자
+    private static final int DEFAULT_CHUNK_SIZE = 800;
+    //오버랩: 문맥 단절을 막기 위해 앞뒤 내용을 100토큰씩 겹치게
+    private static final int DEFAULT_CHUNK_OVERLAP = 100;
     /**
      * 파일에서 텍스트를 추출
      */
@@ -73,13 +81,27 @@ public class FileHandler {
         }
         return sb.toString();
     }
+
+    /**
+     * SPRING AI TokenTextSplitter를 이용한 스마트 청킹
+     * - 단순 글자 수가 아닌 '토큰' 단위로 자름
+     * - 문맥 유지를 위해 오버랩 적용
+     */
     //텍스트 분할 메서드
-    public List<String> splitTextIntoChunks(String text, int chunkSize){
-        List<String> chunks = new ArrayList<>();
-        for(int i = 0; i < text.length(); i += chunkSize){
-            chunks.add(text.substring(i, Math.min(text.length(), i + chunkSize)));
+    public List<String> splitTextIntoChunks(String text){
+        if(text == null || text.isEmpty()){
+            return new ArrayList<>();
         }
-        return chunks;
+        // TokenTextSplitter 생성
+        TokenTextSplitter splitter = new TokenTextSplitter(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP, 5, 10000, true);
+
+        //텍스트를 document 리스트로 분할
+        List<Document> documents = splitter.apply(List.of(new Document(text)));
+
+        //document 객체에서 다시 텍스트만 추출, 리스트로 반환
+        return documents.stream()
+                .map(Document::getContent)
+                .collect(Collectors.toList());
     }
 
     //텍스트 정제 함수

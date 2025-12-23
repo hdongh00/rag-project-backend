@@ -20,10 +20,10 @@ public class Document {
     @Column(name = "document_id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
     private String originalFileName; //사용자가 업도르한 원본 파일 이름
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String s3FileUrl; //s3에 저장된 파일의 Url
 
     @Column(nullable = false, updatable = false)

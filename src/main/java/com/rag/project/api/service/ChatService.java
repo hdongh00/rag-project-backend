@@ -79,7 +79,7 @@ public class ChatService {
         float[] questionVector = embeddingService.getEmbedding(question);
 
         //DB에서 질문과 가장 유사한 문서 조각 5개 검색
-        List<DocumentEmbedding> similarChunks = embeddingRepository.findNearest(questionVector);
+        List<DocumentEmbedding> similarChunks = embeddingRepository.findNearest(questionVector, member.getId());
 
         //검색된 문서 조각들의 텍스트만 뽑아서 하나로 합침
         String context = similarChunks.stream()

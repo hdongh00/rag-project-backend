@@ -14,8 +14,11 @@ public interface DocumentEmbeddingRepository extends JpaRepository<DocumentEmbed
      */
     //@query: jpa가 만들어주는 기본기능으로 해결 안 될 때, 직접 SQL을 작성
     //<->: 벡터 간 거리를 계산하는 pgvector 연산자
-    @Query(value = "SELECT * FROM document_embeddings " +
+    @Query(value = "SELECT e. * FROM document_embeddings e " +
+                   "JOIN documents d ON e.document_id = d.document_id " +
+                   "WHERE d.member_id = :memberId " +
                    "ORDER BY embedding_vector <-> cast(:queryVector as vector) ASC " +
                    "LIMIT 5", nativeQuery = true) //가장 유사한 5개 가져옴
-    List<DocumentEmbedding> findNearest(@Param("queryVector") float[] queryVector);
+    List<DocumentEmbedding> findNearest(@Param("queryVector") float[] queryVector,
+                                        @Param("memberId") Long memberId); //사용자 ID 파라미터 추가
 }
